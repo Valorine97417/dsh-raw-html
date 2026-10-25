@@ -1159,6 +1159,15 @@
     return -1
   }
   function fixVcpBlank(text) {
+    // v6.43：mdast 解析前剥掉残缺 tts 注释——CommonMark HTML block type 2（<!--）
+    // 没有 --> 结束行时永不闭合、空行不打断，残缺注释把整条消息（含 ``` 围栏）
+    // 吞进单个 html 节点，终帧 lenient 剥法只剥注释行，剩余 Markdown 走 HTML
+    // 处理链全部变文本节点、整条显示源码。完整注释（行内有 -->）原样保留。
+    if (text && text.indexOf('<!--tts:') !== -1) {
+      text = text.replace(/^[ \t]*<!--tts:[^\n]*/gm, function (mm) {
+        return mm.indexOf('-->') !== -1 ? mm : ''
+      })
+    }
     if (!text || text.indexOf('<div id="vcp-root"') === -1) return text
     var t = text.replace(/([^\n])\n(?= *<div id="vcp-root")/g, '$1\n\n')
     var m = /<div id="vcp-root"/.exec(t)
